@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[13]:
+# In[67]:
 
 
 import pandas as pd
@@ -28,7 +28,7 @@ StartDate = "20.03.2019"
 Year = int(input("Введите год отчета: "))   
 
 
-# In[14]:
+# In[68]:
 
 
 def get_usd_table():
@@ -47,7 +47,7 @@ def get_usd_table():
 get_usd_table()
 
 
-# In[15]:
+# In[69]:
 
 
 def split_report():
@@ -87,14 +87,14 @@ def split_report():
 split_report()
 
 
-# In[16]:
+# In[70]:
 
 
 def get_ticker_price(ticker: str):
     return float(yf.Ticker(ticker).history(period="1d").Close.median())
 
 
-# In[17]:
+# In[71]:
 
 
 def trades_add():
@@ -133,7 +133,7 @@ def trades_add():
 trades_extra = trades_add()
 
 
-# In[18]:
+# In[72]:
 
 
 def load_data():
@@ -162,17 +162,25 @@ def load_data():
     comissions = comissions[comissions.subtitle != "Total"]
     comissions.date = pd.to_datetime(comissions.date)
     comissions = comissions[comissions.date.dt.year == Year]
-    div = data["Dividends"]
-    div.columns = [col.lower() for col in div]
-    div = pd.DataFrame(div[div.currency == "USD"])
-    div.date = pd.to_datetime(div.date)
-    div = pd.DataFrame(div[div.date.dt.year == Year])
-    div_tax = data["Withholding Tax"]
-    div_tax.columns = [col.lower() for col in div_tax]
-    div_tax = pd.DataFrame(div_tax[div_tax.currency == "USD"])
-    div_tax.date = pd.to_datetime(div_tax.date)    
-    div_tax = pd.DataFrame(div_tax[div_tax.date.dt.year == Year])
-    assert div.shape[0] == div_tax.shape[0], "Tax table must be the same size as dividents table!"
+    if "Dividends" in data:
+        div = data["Dividends"]
+        div.columns = [col.lower() for col in div]
+        div = pd.DataFrame(div[div.currency == "USD"])
+        div.date = pd.to_datetime(div.date)
+        div = pd.DataFrame(div[div.date.dt.year == Year])
+    else:
+        div = None
+    if div is not None and "Withholding Tax" in data:
+        div_tax = data["Withholding Tax"]
+        div_tax.columns = [col.lower() for col in div_tax]
+        div_tax = pd.DataFrame(div_tax[div_tax.currency == "USD"])
+        div_tax.date = pd.to_datetime(div_tax.date)    
+        div_tax = pd.DataFrame(div_tax[div_tax.date.dt.year == Year])
+        if div.shape[0] != div_tax.shape[0]:
+            print("Размеры таблиц дивидендов и налогов по ним не совпадают. Налог на дивиденды будет 13%")
+            div_tax = None
+    else:
+        div_tax = None
     div_accurals = data["Change in Dividend Accruals"]
     div_accurals.columns = [col.lower() for col in div_accurals]
     div_accurals = pd.DataFrame(div_accurals[div_accurals.currency == "USD"])
@@ -188,7 +196,7 @@ def load_data():
 trades, comissions, div, div_tax, div_accurals, usd = load_data()
 
 
-# In[19]:
+# In[73]:
 
 
 def get_usd(date):
@@ -197,34 +205,40 @@ def get_usd(date):
     return float(usd.iloc[[indexmax]].val)    
 
 
-# In[20]:
+# In[75]:
 
 
 def div_calc():
-    print(f"Расчет таблицы дивидендов...")
-    res = pd.DataFrame()
-    res["ticker"] = [desc.split(" Cash Dividend")[0] for desc in div.description]
-    res["date"] = div["date"].values
-    res["amount"] = div["amount"].values.round(2)
-    res["tax_paid"] = -div_tax["amount"].values.round(2)
-    res["usd_price"] = [get_usd(d) for d in div.date]
-    res["amount_rub"] = (res.amount*res.usd_price).round(2)
-    res["tax_paid_rub"] = (res.tax_paid*res.usd_price).round(2)
-    res["tax_full_rub"] = (res.amount_rub*13/100).round(2)
-    res["tax_rest_rub"] = (res.tax_full_rub - res.tax_paid_rub).round(2)
-    return res
+    if div is not None:
+        print(f"Расчет таблицы дивидендов...")
+        res = pd.DataFrame()
+        res["ticker"] = [desc.split(" Cash Dividend")[0] for desc in div.description]
+        res["date"] = div["date"].values
+        res["amount"] = div["amount"].values.round(2)
+        if div_tax is None:
+            print("Не найдена таблица удержанного налога с дивидендов. Налог на дивиденды будет 13%")
+        res["tax_paid"] = -div_tax["amount"].values.round(2) if div_tax is not None else 0
+        res["usd_price"] = [get_usd(d) for d in div.date]
+        res["amount_rub"] = (res.amount*res.usd_price).round(2)
+        res["tax_paid_rub"] = (res.tax_paid*res.usd_price).round(2)
+        res["tax_full_rub"] = (res.amount_rub*13/100).round(2)
+        res["tax_rest_rub"] = (res.tax_full_rub - res.tax_paid_rub).round(2)
+        return res
+    else:
+        print(f"Нет таблиц дивидендов и налогов по ним. В отчете будет пустая таблица...")
+        return(pd.DataFrame(columns=["ticker", "date", "amount", "tax_paid", "usd_price", "amount_rub", "tax_paid_rub", "tax_full_rub", "tax_rest_rub"]))
 
 div_res = div_calc()
-div_sum = div_res.amount_rub.sum().round(2)
-div_tax_paid_rub_sum = div_res.tax_paid_rub.sum().round(2)
-div_tax_full_rub_sum = div_res.tax_full_rub.sum().round(2)
-div_tax_rest_sum = div_res.tax_rest_rub.sum().round(2)
+div_sum = round(div_res.amount_rub.sum(), 2)
+div_tax_paid_rub_sum = round(div_res.tax_paid_rub.sum(), 2)
+div_tax_full_rub_sum = round(div_res.tax_full_rub.sum(), 2)
+div_tax_rest_sum = round(div_res.tax_rest_rub.sum(), 2)
 print("\ndiv_res:")
-print(div_res.head(20))
+print(div_res.head(2))
 print("\n")
 
 
-# In[21]:
+# In[76]:
 
 
 def div_accurals_calc():
@@ -251,7 +265,7 @@ print(div_accurals_res.head(2))
 print("\n")
 
 
-# In[10]:
+# In[77]:
 
 
 div_final_tax_rest_sum = div_tax_rest_sum.round(2) + div_accurals_tax_rest_sum.round(2)
@@ -259,7 +273,7 @@ div_final_sum = div_sum.round(2) + div_accurals_sum.round(2)
 div_tax_paid_final_sum = div_tax_paid_rub_sum.round(2) + div_accurals_tax_paid_rub_sum.round(2)
 
 
-# In[11]:
+# In[78]:
 
 
 def fees_calc():
@@ -278,7 +292,7 @@ print(fees_res.head(2))
 print("\n")
 
 
-# In[31]:
+# In[79]:
 
 
 def trades_calc():
@@ -287,35 +301,45 @@ def trades_calc():
     assets = {}
     rows = []
     for key, val in trades.groupby("symbol"):
+        fail = False
         if not key in assets:
             assets[key] = []
         for date, price, fee, quantity in zip(val.date, val.price, val.fee, val.quantity):
+            if fail:
+                break
             for _ in range(int(abs(quantity))):
+                if fail:
+                    break                
                 if quantity > 0:
                     assets[key].append(Asset(date, price, fee))
                 elif quantity < 0:
-                    buy_date, buy_price, buy_fee = assets[key].pop(0)
-                    if date.year == Year:
-                        #buy
-                        rows.append(
-                            {
-                                'ticker': key,
-                                'date': buy_date,
-                                'price': buy_price,
-                                'fee': buy_fee,
-                                'cnt': 1,
-                            }
-                        )
-                        #sell
-                        rows.append(
-                            {
-                                'ticker': key,
-                                'date': date,
-                                'price': price,
-                                'fee': fee,
-                                'cnt': -1,
-                            }
-                        )
+                    if assets[key]:
+                        buy_date, buy_price, buy_fee = assets[key].pop(0)
+                        if date.year == Year:
+                            #buy
+                            rows.append(
+                                {
+                                    'ticker': key,
+                                    'date': buy_date,
+                                    'price': buy_price,
+                                    'fee': buy_fee,
+                                    'cnt': 1,
+                                }
+                            )
+                            #sell
+                            rows.append(
+                                {
+                                    'ticker': key,
+                                    'date': date,
+                                    'price': price,
+                                    'fee': fee,
+                                    'cnt': -1,
+                                }
+                            )
+                    else:
+                        print(f"Актив ({key}) продан в большем количестве, чем покупался. Операции SHORT не поддерживаются.")
+                        rows = [row for row in rows if row["ticker"] != key]
+                        fail = True
     if datetime.today().year == Year:
         print("Рассчет налоговых оптимизаций...")
         usd_today = get_usd(datetime.today())
@@ -353,13 +377,13 @@ print(trades_res.head(2))
 print("\n")
 
 
-# In[ ]:
+# In[80]:
 
 
 income_rub_sum = round(trades_res.amount_rub.sum(), 2)
 
 
-# In[ ]:
+# In[81]:
 
 
 Fname = f"Пояснительная записка {Year}.docx"
@@ -392,7 +416,7 @@ def create_doc():
 create_doc()
 
 
-# In[ ]:
+# In[82]:
 
 
 input("Готово.")
