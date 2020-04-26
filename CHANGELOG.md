@@ -9,3 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Первая версия
+
+## [0.2] - 2020-04-26
+
+### Added (ib.py)
+- Парсинг разделов отчета "Deposits & Withdrawals" и "Interest"
+- Поддержка валют RUB и EURO
+- Расчет дохода по программе повышения доходности
+
+### Added (template.docx)
+- В таблицы добавлен столбец "Валюта"
+- Перечень прикладываемых документов
+- Раздел 2.4 по программе повышения доходности
