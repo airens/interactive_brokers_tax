@@ -32,40 +32,7 @@ currencies = {
     "EUR": ["01239", "EURRUB=X", None],
 }
 
-StartDate = "01.01.2018"
-
-
-# In[2]:
-
-
-div_res = None
-div_accurals_res = None
-cashflow_res = None
-interest_res = None
-trades_res = None
-interest_res = None
-fees_res = None
-div_sum = 0
-div_tax_paid_rub_sum = 0
-div_tax_full_rub_sum = 0
-div_tax_rest_sum = 0
-div_tax_need_pay_final_sum = 0
-div_accurals_sum = 0
-div_accurals_tax_paid_rub_sum = 0
-div_accurals_tax_full_rub_sum = 0
-div_accurals_tax_rest_sum = 0
-div_final_tax_rest_sum = 0
-div_final_sum = 0
-div_tax_paid_final_sum = 0
-income_rub_sum = 0
-income_rest_sum = 0
-fees_rub_sum = 0
-interest_rub_sum = 0
-interest_rest_sum = 0
-cashflow_rub_sum = 0
-cashflow_usd_sum = 0
-cashflow_eur_sum = 0
-
+StartDate = "10.12.2018"
 
 # In[3]:
 
@@ -366,62 +333,92 @@ else:
 # In[11]:
 
 
-def div_accurals_calc():
-    print(f"Расчет таблицы корректировки дивидендов...")
+def div_accurals_calc(year):
+    print(f"Расчет таблицы корректировки дивидендов за {year} год...")
+    if div_accurals[year] is None:
+        print(f"За {year} нет корректировки дивидендов")
+        return None
     res = pd.DataFrame()
-    res["ticker"] = div_accurals['symbol']
-    res["date"] = div_accurals["date"]
-    res["amount"] = div_accurals["gross amount"].round(2)
-    res["currency"] = div_accurals["currency"].values
-    res["tax_paid"] = div_accurals["tax"].round(2)
-    res["cur_price"] = [get_currency(row.date, row.currency) for _, row in div_accurals.iterrows()]
+    res["ticker"] = div_accurals[year]['symbol']
+    res["date"] = div_accurals[year]["date"]
+    res["amount"] = div_accurals[year]["gross amount"].round(2)
+    res["currency"] = div_accurals[year]["currency"].values
+    res["tax_paid"] = div_accurals[year]["tax"].round(2)
+    res["cur_price"] = [get_currency(row.date, row.currency) for _, row in div_accurals[year].iterrows()]
     res["amount_rub"] = (res.amount*res.cur_price).round(2)
     res["tax_paid_rub"] = (res.tax_paid*res.cur_price).round(2)
     res["tax_full_rub"] = (res.amount_rub*13/100).round(2)
     res["tax_rest_rub"] = (res.tax_full_rub - res.tax_paid_rub).round(2)
     return res
 
+div_accurals_res = {}
+div_accurals_sum = {}
+div_accurals_tax_paid_rub_sum = {}
+div_accurals_tax_full_rub_sum = {}
+div_accurals_tax_rest_sum = {}
+
 if div_accurals is not None:
-    div_accurals_res = div_accurals_calc()
-    div_accurals_sum = div_accurals_res.amount_rub.sum().round(2)
-    div_accurals_tax_paid_rub_sum = div_accurals_res.tax_paid_rub.sum().round(2)
-    div_accurals_tax_full_rub_sum = div_accurals_res.tax_full_rub.sum().round(2)
-    div_accurals_tax_rest_sum = div_accurals_res.tax_rest_rub.sum().round(2)
-    print("\ndiv_accurals_res:")
-    print(div_accurals_res.head(2))
-    print("\n")
+    for report in yearReports:
+        div_accurals_res[report[0]] = div_accurals_calc(report[0])
+        if div_accurals_res[report[0]] is None:
+            div_accurals_sum[report[0]] = None
+            div_accurals_tax_paid_rub_sum[report[0]] = None
+            div_accurals_tax_full_rub_sum[report[0]] = None
+            div_accurals_tax_rest_sum[report[0]] = None
+        else:
+            div_accurals_sum[report[0]] = div_accurals_res[report[0]].amount_rub.sum().round(2)
+            div_accurals_tax_paid_rub_sum[report[0]] = div_accurals_res[report[0]].tax_paid_rub.sum().round(2)
+            div_accurals_tax_full_rub_sum[report[0]] = div_accurals_res[report[0]].tax_full_rub.sum().round(2)
+            div_accurals_tax_rest_sum[report[0]] = div_accurals_res[report[0]].tax_rest_rub.sum().round(2)
+            print(f"Корретктировка дивидендов за {report[0]} год: {div_accurals_sum[report[0]]} Rub")
 else:
     print("Нет данных по изменениям в начисленнии дивидендов")
 
 
 # In[12]:
 
+div_final_tax_rest_sum = {}
+div_final_sum = {}
+div_tax_paid_final_sum = {}
+div_tax_need_pay_final_sum = {}
 
-div_final_tax_rest_sum = (div_tax_rest_sum + div_accurals_tax_rest_sum).round(2)
-div_final_sum = (div_sum + div_accurals_sum).round(2)
-div_tax_paid_final_sum = (div_tax_paid_rub_sum + div_accurals_tax_paid_rub_sum).round(2)
-div_tax_need_pay_final_sum = (div_tax_rest_sum + div_accurals_tax_rest_sum).round(2)
+for report in yearReports:
+    if div_tax_rest_sum[report[0]] is None:
+        continue
+    div_final_tax_rest_sum[report[0]] = (div_tax_rest_sum[report[0]] + div_accurals_tax_rest_sum[report[0]]).round(2)
+    div_final_sum[report[0]] = (div_sum[report[0]] + div_accurals_sum[report[0]]).round(2)
+    div_tax_paid_final_sum[report[0]] = (div_tax_paid_rub_sum[report[0]] + div_accurals_tax_paid_rub_sum[report[0]]).round(2)
+    div_tax_need_pay_final_sum[report[0]] = (div_tax_rest_sum[report[0]] + div_accurals_tax_rest_sum[report[0]]).round(2)
 
 
 # In[13]:
 
 
-def fees_calc():
+def fees_calc(year):
     print("Расчет таблицы комиссий...")
+    if comissions[year] is None:
+        print(f"За {year} нет комиссий")
+        return None
     fees = pd.DataFrame()
-    fees["date"] = comissions.date
-    fees["fee"] = comissions.amount*-1
-    fees["currency"] = comissions["currency"].values
-    fees["cur_price"] = [get_currency(row.date, row.currency) for _, row in comissions.iterrows()]
+    fees["date"] = comissions[year].date
+    fees["fee"] = comissions[year].amount*-1
+    fees["currency"] = comissions[year]["currency"].values
+    fees["cur_price"] = [get_currency(row.date, row.currency) for _, row in comissions[year].iterrows()]
     fees["fee_rub"] = (fees.fee*fees.cur_price).round(2)
     return fees
 
+fees_res = {}
+fees_rub_sum = {}
+
 if comissions is not None:
-    fees_res = fees_calc()
-    fees_rub_sum = fees_res.fee_rub.sum().round(2)
-    print("\nfees_res:")
-    print(fees_res.head(2))
-    print("\n")
+    for report in yearReports:
+        fees_res[report[0]] = fees_calc(report[0])
+        if fees_res[report[0]] is None:
+            fees_rub_sum[report[0]] = None
+        else:
+            fees_rub_sum[report[0]] = fees_res[report[0]].fee_rub.sum().round(2)
+            print(f"Комиссий за {report[0]} год: {fees_rub_sum[report[0]]} Rub")
+
 else:
     print("Нет данных по комиссиям")
 
