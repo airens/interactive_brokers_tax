@@ -395,7 +395,7 @@ for report in yearReports:
 
 
 def fees_calc(year):
-    print("Расчет таблицы комиссий...")
+    print(f"Расчет таблицы комиссий за {year} год...")
     if comissions[year] is None:
         print(f"За {year} нет комиссий")
         return None
@@ -422,16 +422,108 @@ if comissions is not None:
 else:
     print("Нет данных по комиссиям")
 
+# In[] :
+def proceed_trades():
+    assets = {}
+    Asset = namedtuple("Asset", "date price fee quantity currency")
+    rows = {}
+    for report in yearReports:
+        year = report[0]
+        print(f"Расчет сделок за {year} год...")
+        if not year in rows:
+            rows[year] = []
+        if trades[year] is None:
+            print(f"За {year} нет сделок")
+            continue
+        for key, val in trades[report[0]].groupby("symbol"):
+            for date, price, fee, quantity, currency in zip(val.date, val.price, val.fee, val.quantity, val.currency):
+                if (quantity > 0):
+                    if not key in assets:
+                        assets[key] = []
+                    assets[key].append(Asset(date, price, fee, quantity, currency))
+                else:
+                    selFullfill = False
+                    quantityToTulfill = -quantity
+                    intermRows = []
+                    while not selFullfill:
+                        if key not in assets or len(assets[key]) == 0:
+                            print(f"Продали {key} больше чем купили. Short не поддерживается.")
+                            break
+
+                        buy_date, buy_price, buy_fee, buy_quantity, buy_currency = assets[key].pop(0)
+                        intermRows.append(
+                            {
+                                'ticker': key,
+                                'date': buy_date,
+                                'price': buy_price,
+                                'fee': buy_fee,
+                                'cnt': min(buy_quantity, quantityToTulfill),
+                                'currency': buy_currency
+                            }
+                        )
+                        quantityToTulfill -= buy_quantity
+                        selFullfill = quantityToTulfill <= 0
+                        if quantityToTulfill < 0:
+                            # -quantityToTulfill items still not used from what have already been bought, add it back
+                            assets[key].insert(0, Asset(date, price, fee, -quantityToTulfill, currency))
+                    
+                    if selFullfill:
+                        for buyRow in intermRows:
+                            # Sell operation was done after buying respective amount of stocks, show this in report
+                            rows[year].append(buyRow)
+
+                        rows[year].append(
+                            {
+                                'ticker': key,
+                                'date': date,
+                                'price': price,
+                                'fee': fee,
+                                'cnt': quantity,
+                                'currency': currency
+                            }
+                        )
+    return rows
+
+trades_res = {}
+income_rub_sum = {}
+income_rest_sum = {}
+
+if trades is not None:
+    calculatedTrades = proceed_trades()
+
+    for report in yearReports:
+        year = report[0]
+        if year in calculatedTrades:
+            tradesFrame = pd.DataFrame(calculatedTrades[year], columns=['ticker', 'date', 'price', 'fee', 'cnt', 'currency'])
+            internal_trades_res = tradesFrame
+            internal_trades_res["type"] = ["Покупка" if cnt > 0 else "Продажа" for cnt in internal_trades_res.cnt]
+            internal_trades_res["price"] = internal_trades_res.price.round(2)
+            internal_trades_res["fee"] = internal_trades_res.fee.round(2)*-1
+            internal_trades_res["amount"] = (internal_trades_res.price*internal_trades_res.cnt*-1 - internal_trades_res.fee).round(2)
+            internal_trades_res["cur_price"] = [get_currency(row.date, row.currency) for _, row in internal_trades_res.iterrows()]
+            internal_trades_res["amount_rub"] = (internal_trades_res.amount*internal_trades_res.cur_price).round(2)
+            internal_trades_res["rest"] = (internal_trades_res.amount * internal_trades_res.cur_price * 0.13).round(2)
+            internal_trades_res["cnt"] = internal_trades_res.cnt.abs()
+            internal_trades_res = internal_trades_res.sort_values(["ticker", "type", "date"])
+            internal_trades_res.loc[internal_trades_res.duplicated(subset="ticker"), "ticker"] = ""
+            income_rub_sum = round(internal_trades_res.amount_rub.sum(), 2)
+            income_rest_sum = round(internal_trades_res.amount_rub.sum() * 0.13, 2)
+            trades_res[year] = trades_res
+else:
+    print("Нет данных по сделкам")
+
+# In[]:
+# TODO implement tax optimization calculation and suggestions
 
 # In[14]:
 
 
-def trades_calc():
-    print("Расчет таблицы сделок...")
+def trades_calc(year):
+    print("Расчет таблицы сделок за {year} год...")
     Asset = namedtuple("Asset", "date price fee currency")
     assets = {}
     rows = []
-    for key, val in trades.groupby("symbol"):
+    for key, val in trades[year].groupby("symbol"):
         fail = False
         if not key in assets:
             assets[key] = []
