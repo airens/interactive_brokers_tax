@@ -485,7 +485,7 @@ def trades_calc():
                 print("--Можно продать", cnt, key, "и получить", abs(round(res, 2)), "р. бумажного убытка")
         print("\n")
     return pd.DataFrame(rows, columns=['ticker', 'date', 'price', 'fee', 'cnt', 'currency'])
-if "trades" is not None:
+if trades is not None:
     trades_res = trades_calc()
     if len(trades_res):
         trades_res = trades_res.groupby(['ticker', 'date', 'price', 'fee', 'currency'], as_index=False)['cnt'].sum()
