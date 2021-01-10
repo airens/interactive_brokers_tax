@@ -5,6 +5,7 @@
 
 
 import pandas as pd
+import platform
 import os
 import sys
 from glob import glob
@@ -582,8 +583,11 @@ create_doc()
 # In[18]:
 
 
-input("Готово.")
-os.startfile(Fname, "open")
+if platform.system() == 'Windows':
+    input("Готово. Нажмите Enter, чтобы продолжить")
+    os.startfile(Fname, "open")
+else:
+    print("Готово")
 
 
 # In[ ]:
