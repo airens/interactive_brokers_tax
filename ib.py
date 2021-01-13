@@ -176,7 +176,7 @@ def load_data():
     if "Trades" in data:
         trades = data["Trades"]
         trades.columns = [col.lower() for col in trades]
-        trades = trades.rename(columns={"comm/fee": "fee", "date/time": "date", "t. price": "price"})
+        trades = trades.rename(columns={"comm/fee": "fee", "date/time": "date", "t. price": "price", "comm in usd":"fee"})
         trades = trades[trades.header == "Data"]
         trades = trades[trades.fee < 0]
         trades.date = pd.to_datetime(trades.date)
