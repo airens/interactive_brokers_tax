@@ -5,6 +5,7 @@
 
 
 import pandas as pd
+import platform
 import os
 import sys
 from glob import glob
@@ -484,7 +485,7 @@ def trades_calc():
                 print("--Можно продать", cnt, key, "и получить", abs(round(res, 2)), "р. бумажного убытка")
         print("\n")
     return pd.DataFrame(rows, columns=['ticker', 'date', 'price', 'fee', 'cnt', 'currency'])
-if "trades" is not None:
+if trades is not None:
     trades_res = trades_calc()
     if len(trades_res):
         trades_res = trades_res.groupby(['ticker', 'date', 'price', 'fee', 'currency'], as_index=False)['cnt'].sum()
@@ -582,8 +583,11 @@ create_doc()
 # In[18]:
 
 
-input("Готово.")
-os.startfile(Fname, "open")
+if platform.system() == 'Windows':
+    input("Готово. Нажмите Enter, чтобы продолжить")
+    os.startfile(Fname, "open")
+else:
+    print("Готово")
 
 
 # In[ ]:
