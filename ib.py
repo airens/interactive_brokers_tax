@@ -427,7 +427,6 @@ def trades_calc():
     Asset = namedtuple("Asset", "date price fee currency")
     assets = {}
     rows = []
-    for key, val in trades.groupby("symbol"):
     normalizedTrades = trades.sort_values(['date'], ascending=True).groupby("symbol")
     for key, val in normalizedTrades:
         fail = False
