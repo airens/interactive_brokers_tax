@@ -112,8 +112,11 @@ def split_report():
         out_file = None
         line = file.readline()
         while line:
-            section, header, *_ = line.split(',')
+            section, header, column, *_ = line.split(',')
             section = section
+            if section == "Trades" and column =="Account":
+                line = file.readline()
+                continue
             if header == "Header":
                 if out_file:
                     out_file.close()
