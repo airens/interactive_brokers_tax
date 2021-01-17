@@ -112,8 +112,11 @@ def split_report():
         out_file = None
         line = file.readline()
         while line:
-            section, header, *_ = line.split(',')
+            section, header, column, *_ = line.split(',')
             section = section
+            if section == "Trades" and column =="Account":  # Skip strategies
+                line = file.readline()
+                continue            
             if header == "Header":
                 if out_file:
                     out_file.close()
@@ -215,8 +218,23 @@ def load_data():
         div_tax.date = pd.to_datetime(div_tax.date)
         div_tax = pd.DataFrame(div_tax[div_tax.date.dt.year == Year])
         if div.shape[0] != div_tax.shape[0]:
-            print("Размеры таблиц дивидендов и налогов по ним не совпадают. Налог на дивиденды будет 13%")
-            div_tax = None
+            print("Размеры таблиц дивидендов и налогов по ним не совпадают. Попробуем исправить...")
+            df = pd.DataFrame(columns=div_tax.columns)
+            for index, row in div.iterrows():
+                tax_row = div_tax[(div_tax["date"] == row["date"]) & (div_tax["ticker"] == row["ticker"])]
+                if not tax_row.empty:
+                    df.loc[index] = tax_row.T.squeeze()
+                else:
+                    df.loc[index] = pd.Series({
+                        "withholding tax": "Withholding Tax",
+                        "header": "Data",
+                        "currency": div["currency"],
+                        "date": div["date"],
+                        "ticker": row["ticker"],
+                        "amount": np.rint(0),
+                        "code": np.nan,
+                    })
+            div_tax = df
     else:
         div_tax = None
     if "Change in Dividend Accruals" in data:
@@ -424,7 +442,7 @@ def trades_calc():
     Asset = namedtuple("Asset", "date price fee currency")
     assets = {}
     rows = []
-    for key, val in trades.groupby("symbol"):
+    for key, val in trades.sort_values(['date'], ascending=True).groupby("symbol"):
         fail = False
         if not key in assets:
             assets[key] = []
