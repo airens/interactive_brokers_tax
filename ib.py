@@ -5,6 +5,7 @@
 
 
 import pandas as pd
+import numpy as np
 import platform
 import os
 import sys
@@ -217,6 +218,10 @@ def load_data():
         div_tax = pd.DataFrame(div_tax[div_tax.currency.isin(currencies)])
         div_tax.date = pd.to_datetime(div_tax.date)
         div_tax = pd.DataFrame(div_tax[div_tax.date.dt.year == Year])
+        div.description = [desc.split(" Cash Dividend")[0].replace(" (", "(") for desc in div.description]
+        div_tax.description = [desc.split(" Cash Dividend")[0].replace(" (", "(") for desc in div_tax.description]
+        div.rename(columns={"description": "ticker"}, inplace=True)
+        div_tax.rename(columns={"description": "ticker"}, inplace=True)
         if div.shape[0] != div_tax.shape[0]:
             print("Размеры таблиц дивидендов и налогов по ним не совпадают. Попробуем исправить...")
             df = pd.DataFrame(columns=div_tax.columns)
@@ -344,7 +349,7 @@ else:
 def div_calc():
     print(f"Расчет таблицы дивидендов...")
     res = pd.DataFrame()
-    res["ticker"] = [desc.split(" Cash Dividend")[0] for desc in div.description]
+    res["ticker"] = div["ticker"].values
     res["date"] = div["date"].values
     res["amount"] = div["amount"].values.round(2)
     res["currency"] = div["currency"].values
@@ -355,7 +360,7 @@ def div_calc():
     res["amount_rub"] = (res.amount*res.cur_price).round(2)
     res["tax_paid_rub"] = (res.tax_paid*res.cur_price).round(2)
     res["tax_full_rub"] = (res.amount_rub*13/100).round(2)
-    res["tax_rest_rub"] = (res.tax_full_rub - res.tax_paid_rub).round(2)
+    res["tax_rest_rub"] = (res.tax_full_rub - res.tax_paid_rub).round(2).clip(lower=0)
     return res
 
 if div is not None:
