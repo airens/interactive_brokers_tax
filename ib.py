@@ -226,19 +226,31 @@ def load_data():
             print("Размеры таблиц дивидендов и налогов по ним не совпадают. Попробуем исправить...")
             df = pd.DataFrame(columns=div_tax.columns)
             for index, row in div.iterrows():
-                tax_row = div_tax[(div_tax["date"] == row["date"]) & (div_tax["ticker"] == row["ticker"])]
+                tax_row = div_tax[
+                    (div_tax["date"] == row["date"])
+                    & (div_tax["ticker"] == row["ticker"])
+                    & (div_tax["currency"] == row["currency"])
+                ]
                 if not tax_row.empty:
-                    df.loc[index] = tax_row.T.squeeze()
+                    if len(tax_row) == 1:
+                        amount = tax_row["amount"].item()
+                    else:
+                        print("Данных за день для тикера больше чем предполагалось, они будут объединены")
+                        print(tax_row.head())
+                        amount = tax_row["amount"].sum()
                 else:
-                    df.loc[index] = pd.Series({
-                        "withholding tax": "Withholding Tax",
-                        "header": "Data",
-                        "currency": div["currency"],
-                        "date": div["date"],
-                        "ticker": row["ticker"],
-                        "amount": np.rint(0),
-                        "code": np.nan,
-                    })
+                    amount = np.float64(0)
+
+                df.loc[index] = pd.Series({
+                    "withholding tax": "Withholding Tax",
+                    "header": "Data",
+                    "currency": row["currency"],
+                    "date": row["date"],
+                    "ticker": row["ticker"],
+                    "amount": amount,
+                    "code": np.nan,
+                })
+
             div_tax = df
     else:
         div_tax = None
