@@ -531,11 +531,10 @@ if trades is not None:
     trades_res["fee"] = trades_res.fee.round(2)*-1
     trades_res["amount"] = (trades_res.price*trades_res.cnt*-1).round(2)
     trades_res["amount_buy"] = trades_res["amount"]
-    trades_res.loc[trades_res['amount'] < 0, 'amount'] = 0
-    trades_res.loc[trades_res['amount_buy'] > 0, 'amount_buy'] = 0
-    trades_res["amount"].fillna(0, inplace=True)
     trades_res["cur_price"] = [get_currency(row.date, row.currency) for _, row in trades_res.iterrows()]
     trades_res["amount_rub"] = (trades_res.amount*trades_res.cur_price).round(2)
+    trades_res.loc[trades_res['amount_rub'] < 0, 'amount_rub'] = 0
+    trades_res.loc[trades_res['amount_buy'] > 0, 'amount_buy'] = 0    
     trades_res["deduction"] = ((trades_res.amount_buy*-1+trades_res.fee)*trades_res.cur_price).round(2)
     trades_res["cnt"] = trades_res.cnt.abs()
     trades_res = trades_res.sort_values(["ticker", "type", "date"])
