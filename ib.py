@@ -61,7 +61,7 @@ div_final_tax_rest_sum = 0
 div_final_sum = 0
 div_tax_paid_final_sum = 0
 income_rub_sum = 0
-income_rest_sum = 0
+deduction_sum = 0
 fees_rub_sum = 0
 interest_rub_sum = 0
 interest_rest_sum = 0
@@ -520,6 +520,8 @@ def trades_calc():
                 print("--Можно продать", cnt, key, "и получить", abs(round(res, 2)), "р. бумажного убытка")
         print("\n")
     return pd.DataFrame(rows, columns=['ticker', 'date', 'price', 'fee', 'cnt', 'currency'])
+
+
 if trades is not None:
     trades_res = trades_calc()
     if len(trades_res):
@@ -527,15 +529,19 @@ if trades is not None:
     trades_res["type"] = ["Покупка" if cnt > 0 else "Продажа" for cnt in trades_res.cnt]
     trades_res["price"] = trades_res.price.round(2)
     trades_res["fee"] = trades_res.fee.round(2)*-1
-    trades_res["amount"] = (trades_res.price*trades_res.cnt*-1 - trades_res.fee).round(2)
+    trades_res["amount"] = (trades_res.price*trades_res.cnt*-1).round(2)
+    trades_res["amount_buy"] = trades_res["amount"]
+    trades_res.loc[trades_res['amount'] < 0, 'amount'] = 0
+    trades_res.loc[trades_res['amount_buy'] > 0, 'amount_buy'] = 0
+    trades_res["amount"].fillna(0, inplace=True)
     trades_res["cur_price"] = [get_currency(row.date, row.currency) for _, row in trades_res.iterrows()]
     trades_res["amount_rub"] = (trades_res.amount*trades_res.cur_price).round(2)
-    trades_res["rest"] = (trades_res.amount * trades_res.cur_price * 0.13).round(2)
+    trades_res["deduction"] = ((trades_res.amount_buy*-1+trades_res.fee)*trades_res.cur_price).round(2)
     trades_res["cnt"] = trades_res.cnt.abs()
     trades_res = trades_res.sort_values(["ticker", "type", "date"])
     trades_res.loc[trades_res.duplicated(subset="ticker"), "ticker"] = ""
     income_rub_sum = round(trades_res.amount_rub.sum(), 2)
-    income_rest_sum = round(trades_res.amount_rub.sum() * 0.13, 2)
+    deduction_sum = round(trades_res.deduction.sum(), 2)
     print("\ntrades_res:")
     print(trades_res.head(2))
     print("\n")
@@ -606,9 +612,10 @@ def create_doc():
         'interest_rub_sum': interest_rub_sum,
         'interest_rest_sum': interest_rest_sum,
         'income_rub_sum': income_rub_sum,
-        'income_rest_sum': income_rest_sum,
+        'deduction_sum': deduction_sum,
         'tbl_fees': fees_res.to_dict(orient='records') if fees_res is not None else {},
-        'fees_rub_sum': fees_rub_sum
+        'fees_rub_sum': fees_rub_sum,
+        'deduction_total_sum': (fees_rub_sum + deduction_sum).round(2)
     }
     doc.render(context)
     doc.save(Fname)
