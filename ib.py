@@ -115,7 +115,7 @@ def split_report():
         while line:
             section, header, column, *_ = line.split(',')
             section = section
-            if section == "Trades" and column =="Account":  # Skip strategies
+            if section == "Trades" and (column =="Account" or "Forex" in line):  # Skip strategies and forex
                 line = file.readline()
                 continue            
             if header == "Header":
@@ -162,6 +162,9 @@ def load_data():
             continue
         print(f"--{fname}")
         df = pd.read_csv(fname, thousands=',')
+        if (df.shape[0] == 0):
+            print("----пропуск (пустой файл)")
+            continue
         section = df.iloc[0, 0]
         if section not in data:
             data[section] = df
