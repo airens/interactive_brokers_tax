@@ -3,7 +3,7 @@ chardet==3.0.4
 docxtpl==0.6.3
 idna==2.9
 Jinja2==2.11.3
-lxml==4.6.2
+lxml==4.6.3
 MarkupSafe==1.1.1
 multitasking==0.0.9
 numpy==1.20.1
