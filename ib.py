@@ -473,7 +473,7 @@ def trades_calc():
                 if fail:
                     break
                 if quantity > 0:
-                    assets[key].append(Asset(date, price, fee, currency))
+                    assets[key].append(Asset(date, price, fee/quantity, currency))
                 elif quantity < 0:
                     if assets[key]:
                         buy_date, buy_price, buy_fee, buy_currency = assets[key].pop(0)
@@ -495,7 +495,7 @@ def trades_calc():
                                     'ticker': key,
                                     'date': date,
                                     'price': price,
-                                    'fee': fee,
+                                    'fee': fee/quantity,
                                     'cnt': -1,
                                     'currency': currency
                                 }
@@ -528,7 +528,7 @@ def trades_calc():
 if trades is not None:
     trades_res = trades_calc()
     if len(trades_res):
-        trades_res = trades_res.groupby(['ticker', 'date', 'price', 'fee', 'currency'], as_index=False)['cnt'].sum()
+        trades_res = trades_res.groupby(['ticker', 'date', 'price', 'currency'], as_index=False)[['cnt', 'fee']].sum()
     trades_res["type"] = ["Покупка" if cnt > 0 else "Продажа" for cnt in trades_res.cnt]
     trades_res["price"] = trades_res.price.round(2)
     trades_res["fee"] = trades_res.fee.round(2)*-1
