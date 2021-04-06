@@ -473,7 +473,7 @@ def trades_calc():
                 if fail:
                     break
                 if quantity > 0:
-                    assets[key].append(Asset(date, price, fee/quantity, currency))
+                    assets[key].append(Asset(date, price, fee/abs(quantity), currency))
                 elif quantity < 0:
                     if assets[key]:
                         buy_date, buy_price, buy_fee, buy_currency = assets[key].pop(0)
@@ -495,7 +495,7 @@ def trades_calc():
                                     'ticker': key,
                                     'date': date,
                                     'price': price,
-                                    'fee': fee/quantity,
+                                    'fee': fee/abs(quantity),
                                     'cnt': -1,
                                     'currency': currency
                                 }
