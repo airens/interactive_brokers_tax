@@ -173,7 +173,7 @@ def load_data():
             data[section] = data[section].append(df, ignore_index=True)
     if "Deposits & Withdrawals" in data:
         cashflow = data["Deposits & Withdrawals"]
-        cashflow.columns = [col.lower() for col in cashflow]
+        cashflow.columns = [col.lower().strip() for col in cashflow]
         cashflow = cashflow.rename(columns={"settle date": "date"})
         cashflow = cashflow[cashflow.header == "Data"]
         cashflow = pd.DataFrame(cashflow[cashflow.currency.isin(currencies)])
@@ -182,7 +182,7 @@ def load_data():
         cashflow = None
     if "Trades" in data:
         trades = data["Trades"]
-        trades.columns = [col.lower() for col in trades]
+        trades.columns = [col.lower().strip() for col in trades]
         trades = trades.rename(columns={"comm/fee": "fee", "date/time": "date", "t. price": "price", "comm in usd":"fee"})
         trades = trades[trades.header == "Data"]
         trades = trades[trades.fee < 0]
@@ -191,7 +191,7 @@ def load_data():
         trades = None
     if "Fees" in data:
         comissions = data["Fees"]
-        comissions.columns = [col.lower() for col in comissions]
+        comissions.columns = [col.lower().strip() for col in comissions]
         comissions = comissions[comissions.header == "Data"]
         comissions = comissions[comissions.subtitle != "Total"]
         comissions.date = pd.to_datetime(comissions.date)
@@ -200,7 +200,7 @@ def load_data():
         comissions = None
     if "Interest" in data:
         interests =  data["Interest"]
-        interests.columns = [col.lower() for col in interests]
+        interests.columns = [col.lower().strip() for col in interests]
         interests = interests[interests.header == "Data"]
         interests = interests[interests.currency != "Total"]
         interests.date = pd.to_datetime(interests.date)
@@ -209,7 +209,7 @@ def load_data():
         interests = None
     if "Dividends" in data:
         div = data["Dividends"]
-        div.columns = [col.lower() for col in div]
+        div.columns = [col.lower().strip() for col in div]
         div = pd.DataFrame(div[div.currency.isin(currencies)])
         div.date = pd.to_datetime(div.date)
         div = pd.DataFrame(div[div.date.dt.year == Year])
@@ -217,7 +217,7 @@ def load_data():
         div = None
     if div is not None and "Withholding Tax" in data:
         div_tax = data["Withholding Tax"]
-        div_tax.columns = [col.lower() for col in div_tax]
+        div_tax.columns = [col.lower().strip() for col in div_tax]
         div_tax = pd.DataFrame(div_tax[div_tax.currency.isin(currencies)])
         div_tax.date = pd.to_datetime(div_tax.date)
         div_tax = pd.DataFrame(div_tax[div_tax.date.dt.year == Year])
@@ -259,7 +259,7 @@ def load_data():
         div_tax = None
     if "Change in Dividend Accruals" in data:
         div_accurals = data["Change in Dividend Accruals"]
-        div_accurals.columns = [col.lower() for col in div_accurals]
+        div_accurals.columns = [col.lower().strip() for col in div_accurals]
         div_accurals = pd.DataFrame(div_accurals[div_accurals.currency.isin(currencies)])
         div_accurals.date = pd.to_datetime(div_accurals.date)
         div_accurals = pd.DataFrame(div_accurals[div_accurals.date.dt.year == Year])
