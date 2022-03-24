@@ -333,7 +333,8 @@ def get_currency(date, cur):
     data = currencies[cur][2]
     diff = (data.date - date)
     indexmax = (diff[(diff <= pd.to_timedelta(0))].idxmax())
-    return float(data.iloc[[indexmax]].val)
+    assert float(data.iloc[[indexmax]].nominal) != 0.0, f"Номинал валюты не может быть 0"
+    return float(data.iloc[[indexmax]].val) / float(data.iloc[[indexmax]].nominal)
 
 
 # In[9]:
