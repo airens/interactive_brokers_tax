@@ -173,7 +173,8 @@ def load_data():
             data[section] = data[section].append(df, ignore_index=True)
     if "Deposits & Withdrawals" in data:
         cashflow = data["Deposits & Withdrawals"]
-        cashflow.columns = [col.lower().strip() for col in cashflow]
+        cashflow.columns = [col.lower().strip(';') for col in cashflow]
+        cashflow.amount = pd.to_numeric([am_str.strip(';') for am_str in cashflow.amount], downcast='float')
         cashflow = cashflow.rename(columns={"settle date": "date"})
         cashflow = cashflow[cashflow.header == "Data"]
         cashflow = pd.DataFrame(cashflow[cashflow.currency.isin(currencies)])
@@ -191,7 +192,8 @@ def load_data():
         trades = None
     if "Fees" in data:
         comissions = data["Fees"]
-        comissions.columns = [col.lower().strip() for col in comissions]
+        comissions.columns = [col.lower().strip(';') for col in comissions]
+        comissions.amount = pd.to_numeric([com_str.strip(';') for com_str in comissions.amount], downcast='float')
         comissions = comissions[comissions.header == "Data"]
         comissions = comissions[comissions.subtitle != "Total"]
         comissions.date = pd.to_datetime(comissions.date)
@@ -200,7 +202,8 @@ def load_data():
         comissions = None
     if "Interest" in data:
         interests =  data["Interest"]
-        interests.columns = [col.lower().strip() for col in interests]
+        interests.columns = [col.lower().strip(';') for col in interests]
+        interests.amount = pd.to_numeric([inter_str.strip(';') for inter_str in interests.amount], downcast='float')
         interests = interests[interests.header == "Data"]
         interests = interests[interests.currency != "Total"]
         interests.date = pd.to_datetime(interests.date)
@@ -209,7 +212,8 @@ def load_data():
         interests = None
     if "Dividends" in data:
         div = data["Dividends"]
-        div.columns = [col.lower().strip() for col in div]
+        div.columns = [col.lower().strip(';') for col in div]
+        div.amount = pd.to_numeric([div_str.strip(';') for div_str in div.amount], downcast='float')
         div = pd.DataFrame(div[div.currency.isin(currencies)])
         div.date = pd.to_datetime(div.date)
         div = pd.DataFrame(div[div.date.dt.year == Year])
