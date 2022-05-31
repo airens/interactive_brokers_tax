@@ -1,6 +1,6 @@
 certifi==2019.11.28
 chardet==3.0.4
-docxtpl==0.6.3
+docxtpl==0.16.0
 idna==2.9
 Jinja2==2.11.3
 lxml==4.6.5
@@ -9,7 +9,7 @@ multitasking==0.0.9
 numpy==1.21.0
 pandas==1.2.3
 python-dateutil==2.8.1
-python-docx==0.8.7
+python-docx==0.8.8
 pytz==2019.3
 requests==2.23.0
 six==1.14.0
