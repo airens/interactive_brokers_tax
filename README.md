@@ -35,4 +35,4 @@ python ib.py
 
 Если скрипт сэкономил вам время, можете поблагодарить автора:
 
-[![Donate](https://img.shields.io/badge/donate-Yandex-red.svg)](https://money.yandex.ru/to/41001607398287)
+[![Donate](https://img.shields.io/badge/donate-Yandex-red.svg)](https://yoomoney.ru/to/41001607398287)
