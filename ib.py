@@ -371,7 +371,7 @@ def div_calc():
     res["currency"] = div["currency"].values
     if div_tax is None:
         print("Не найдена таблица удержанного налога с дивидендов. Налог на дивиденды будет 13%")
-    res["tax_paid"] = -div_tax["amount"].values.round(2) if div_tax is not None else 0
+    res["tax_paid"] = -div_tax["amount"].values.astype(np.double).round(2) if div_tax is not None else 0
     res["cur_price"] = [get_currency(row.date, row.currency) for _, row in div.iterrows()]
     res["amount_rub"] = (res.amount*res.cur_price).round(2)
     res["tax_paid_rub"] = (res.tax_paid*res.cur_price).round(2)
