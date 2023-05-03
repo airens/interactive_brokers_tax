@@ -31,6 +31,7 @@ currencies = {
     "RUB": [],
     "USD": ["01235", "RUB=X", None],
     "EUR": ["01239", "EURRUB=X", None],
+    "CNH": ["01375", "CNHRUB=X", None]
 }
 
 StartDate = "20.03.2019"
