@@ -170,7 +170,7 @@ def load_data():
             data[section] = df
         else:
             df.columns = data[section].columns
-            data[section] = data[section].append(df, ignore_index=True)
+            data[section] = pd.concat([data[section], df], ignore_index=True)
     if "Deposits & Withdrawals" in data:
         cashflow = data["Deposits & Withdrawals"]
         cashflow.columns = [col.lower().strip() for col in cashflow]
