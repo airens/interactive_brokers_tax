@@ -15,6 +15,7 @@ import requests
 import yfinance as yf
 from docxtpl import DocxTemplate
 from collections import namedtuple
+from io import BytesIO
 
 dirname = "ibdata"
 
@@ -87,7 +88,7 @@ def get_crs_tables():
         url += f"{From.strftime(Format1)}&To={To.strftime(Format1)}"
         url += f"&FromDate={From.strftime(Format2).replace('.', '%2F')}&ToDate={To.strftime(Format2).replace('.', '%2F')}"
         response = requests.get(url)
-        df = pd.read_excel(response.content).rename(columns={"data": "date", "curs": "val"})
+        df = pd.read_excel(BytesIO(response.content)).rename(columns={"data": "date", "curs": "val"})
         assert df.shape[0] > 0, f"Не удалось загрузить таблицу курсов {currency}!"
         currencies[currency][2] = df
         with open(f"{currency}.xlsx", "wb") as file:
