@@ -1,7 +1,7 @@
 appdirs==1.4.4
 Babel==2.15.0
 beautifulsoup4==4.12.3
-certifi==2024.6.2
+certifi==2024.7.4
 cffi==1.16.0
 chardet==5.2.0
 charset-normalizer==3.3.2
