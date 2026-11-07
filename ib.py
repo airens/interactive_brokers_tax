@@ -87,7 +87,7 @@ def get_crs_tables():
         url = f"https://cbr.ru/Queries/UniDbQuery/DownloadExcel/98956?Posted=True&mode=1&VAL_NM_RQ=R{data[0]}&From="
         url += f"{From.strftime(Format1)}&To={To.strftime(Format1)}"
         url += f"&FromDate={From.strftime(Format2).replace('.', '%2F')}&ToDate={To.strftime(Format2).replace('.', '%2F')}"
-        response = requests.get(url)
+        response = requests.get(url, timeout=30)
         df = pd.read_excel(BytesIO(response.content)).rename(columns={"data": "date", "curs": "val"})
         assert df.shape[0] > 0, f"Не удалось загрузить таблицу курсов {currency}!"
         currencies[currency][2] = df
